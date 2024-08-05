@@ -57,12 +57,12 @@ class Model:
         self.pipe = AutoPipelineForImage2Image.from_pretrained(
             "stabilityai/sdxl-turbo",
             torch_dtype=torch.float16,
-            device_map="auto",
+            device_map="balanced",
             variant="fp16",
             vae=AutoencoderKL.from_pretrained(
                 "madebyollin/sdxl-vae-fp16-fix",
                 torch_dtype=torch.float16,
-                device_map="auto",
+                device_map="balanced",
             ),
         )
 

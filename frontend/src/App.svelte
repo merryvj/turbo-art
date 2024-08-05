@@ -86,6 +86,13 @@
 
   $: brushSize = "sm";
   $: paint = "black"; // can be hex
+  $: selectedTool = "brush"; // brush, move, fill
+
+  // we activate paper.js tools based on the selected tool
+  let brushTool: paper.Tool;
+  let moveTool: paper.Tool;
+  let fillTool: paper.Tool;
+
   const radiusByBrushSize: Record<string, number> = {
     xs: 1,
     sm: 2,
@@ -99,6 +106,22 @@
     brushSize = e.detail;
   };
 
+  const setTool = (e: CustomEvent<string>) => {
+    selectedTool = e.detail;
+    switch (selectedTool) {
+      case "brush":
+        brushTool.activate();
+        break;
+      case "move":
+        moveTool.activate();
+        break;
+      case "fill":
+        fillTool.activate();
+        break;
+    }
+  };
+
+
   onMount(() => {
     handleWindowResize();
 
@@ -107,23 +130,72 @@
       Paper is used for drawing/paint functionality.
     */
     paper.setup(canvasDrawLayer);
-    const tool = new paper.Tool();
 
     let path: paper.Path;
+    let hitPath: paper.HitResult;
 
-    tool.onMouseDown = (event: paper.ToolEvent) => {
+    // Brush tool events
+    brushTool = new paper.Tool();
+    brushTool.onMouseDown = (event: paper.ToolEvent) => {
       path = new paper.Path();
-      path.strokeColor = new paper.Color(paint);
-      path.strokeWidth = radiusByBrushSize[brushSize] * 4;
+        path.strokeColor = new paper.Color(paint);
+        path.strokeWidth = radiusByBrushSize[brushSize] * 4;
+        path.add(event.point);
+      throttledgenerateOutputImage();
+    };
+
+    brushTool.onMouseDrag = (event: paper.ToolEvent) => {
       path.add(event.point);
+      path.fillColor = new paper.Color("transparent");
 
       throttledgenerateOutputImage();
     };
 
-    tool.onMouseDrag = (event: paper.ToolEvent) => {
-      path.add(event.point);
+    // Move tool events
+    moveTool = new paper.Tool();
+    moveTool.onMouseDown = (event: paper.ToolEvent) => {
+      hitPath = paper.project.hitTest(event.point, {
+        segments: true,
+        stroke: true,
+        fill: true,
+        tolerance: 5,
+      });
 
-      throttledgenerateOutputImage();
+      if (hitPath && hitPath.item) {
+        hitPath.item.bounds.selected = true;
+        throttledgenerateOutputImage();
+      }
+    };
+
+    moveTool.onMouseDrag = (event: paper.ToolEvent) => {
+      if (hitPath && hitPath.item) {
+        hitPath.item.position = hitPath.item.position.add(event.delta);
+      }
+    };
+    
+    moveTool.onMouseUp = () => {
+      if (hitPath && hitPath.item) {
+        hitPath.item.bounds.selected = false;
+        throttledgenerateOutputImage();
+      }
+    };
+
+    // Fill tool events
+    fillTool = new paper.Tool();
+
+    fillTool.onMouseDown = (event: paper.ToolEvent) => {
+
+      // Mimics hitTest, but allows targeting items without a fill
+      const item = paper.project.getItems({
+        match: function(item: paper.Item) {
+            return item.contains(event.point);
+        }
+      }).pop();
+
+      if (item) {
+        item.fillColor = new paper.Color(paint);
+        throttledgenerateOutputImage();
+      }
     };
 
     if (inputElement) {
@@ -447,6 +519,7 @@
             <Paint
               {paint}
               {brushSize}
+              {selectedTool}
               on:clearCanvas={() => {
                 paper.project.activeLayer.removeChildren();
                 paper.view.update();
@@ -454,6 +527,7 @@
               }}
               on:setPaint={setPaint}
               on:setBrushSize={setBrushSize}
+              on:setTool={setTool}
             />
           </div>
         {/if}

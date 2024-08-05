@@ -1,18 +1,22 @@
 <script lang="ts">
-    import { Eraser } from "lucide-svelte";
+    import { Eraser} from "lucide-svelte";
     import { Color, ColorInput } from 'color-picker-svelte'
-
 
     import smallPaintIcon from "$lib/assets/sm-paint-icon.svg";
     import extraSmallPaintIcon from "$lib/assets/xs-paint-icon.svg";
     import mediumPaintIcon from "$lib/assets/md-paint-icon.svg";
     import largePaintIcon from "$lib/assets/lg-paint-icon.svg";
+    import moveIcon from "$lib/assets/move-icon.svg";
+    import fillIcon from "$lib/assets/fill-icon.svg";
+
     import { createEventDispatcher } from "svelte";
 
     const dispatch = createEventDispatcher();
 
     export let paint: string;
     export let brushSize: string;
+    export let selectedTool: string;
+
     $: color = new Color(paint);
     $: {
         handleSetPaint(color.toHexString());
@@ -28,6 +32,11 @@
 
     const handleSetBrushSize = (size: string) => {
         dispatch("setBrushSize", size);
+        dispatch("setTool", "brush");
+    };
+
+    const handleSetTool = (tool: string) => {
+        dispatch("setTool", tool);
     };
 </script>
 
@@ -104,7 +113,7 @@
             <button on:click={() => handleSetBrushSize("xs")}>
                 <img
                     class="brush"
-                    class:brush-active={brushSize === "xs"}
+                    class:brush-active={brushSize === "xs" && selectedTool === "brush"}
                     src={extraSmallPaintIcon}
                     alt="extrasmall paint icon"
                 />
@@ -112,7 +121,7 @@
             <button on:click={() => handleSetBrushSize("sm")}>
                 <img
                     class="brush"
-                    class:brush-active={brushSize === "sm"}
+                    class:brush-active={brushSize === "sm" && selectedTool === "brush"}
                     src={smallPaintIcon}
                     alt="small paint icon"
                 />
@@ -122,7 +131,7 @@
             <button on:click={() => handleSetBrushSize("md")}>
                 <img
                     class="brush"
-                    class:brush-active={brushSize === "md"}
+                    class:brush-active={brushSize === "md" && selectedTool === "brush"}
                     src={mediumPaintIcon}
                     alt="medium paint icon"
                 />
@@ -130,12 +139,31 @@
             <button on:click={() => handleSetBrushSize("lg")}>
                 <img
                     class="brush"
-                    class:brush-active={brushSize === "lg"}
+                    class:brush-active={brushSize === "lg" && selectedTool === "brush"}
                     src={largePaintIcon}
                     alt="large paint icon"
                 />
             </button>
         </div>
+        <div class="flex border-white/10 border-t pt-2.5 justify-between w-full">
+            <button on:click={() => handleSetTool("move")}>
+                <img
+                    class="tool"
+                    class:tool-active={selectedTool === "move"}
+                    src={moveIcon}
+                    alt="move icon"
+                />
+            </button>
+            <button on:click={() => handleSetTool("fill")}> 
+                <img
+                    class="tool"
+                    class:tool-active={selectedTool === "fill"}
+                    src={fillIcon}
+                    alt="fill icon"
+                />
+            </button>
+        </div>
+
     </div>
 </div>
 
@@ -153,13 +181,15 @@
         @apply border-2 border-primary;
     }
 
-    .brush {
+    .brush, .tool {
         filter: invert(100%) sepia(6%) saturate(7487%) hue-rotate(293deg)
             brightness(103%) contrast(118%);
     }
 
-    .brush-active {
+    .brush-active, .tool-active {
         filter: invert(84%) sepia(34%) saturate(768%) hue-rotate(51deg)
             brightness(97%) contrast(92%);
     }
+
+
 </style>

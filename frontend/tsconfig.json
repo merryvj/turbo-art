@@ -16,7 +16,7 @@
     "isolatedModules": true,
     "paths": {
       "$lib": ["./src/lib"], // aliased by SvelteKit
-      "$lib/*": ["./src/lib/*"],
+      "$lib/*": ["./src/lib/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.svelte"],
